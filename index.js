@@ -1999,3 +1999,30 @@ function lockNow() {
     }
 }
 
+
+let deferredPrompt;
+const installButton = document.getElementById('installButton');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installButton.classList.add('show');
+});
+
+installButton.addEventListener('click', async () => {
+    if (!deferredPrompt) {
+        return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to install prompt: ${outcome}`);
+    deferredPrompt = null;
+    installButton.classList.remove('show');
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('PWA was installed');
+    installButton.classList.remove('show');
+    deferredPrompt = null;
+});
+
