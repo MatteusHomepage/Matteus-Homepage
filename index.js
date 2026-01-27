@@ -212,7 +212,7 @@ const startPasswordMonitoring = () => {
 
             alert("The site password has been changed. Please re-enter the new password.");
         }
-    }, 10000); 
+    }, 5); 
 };
 
 const stopPasswordMonitoring = () => {
