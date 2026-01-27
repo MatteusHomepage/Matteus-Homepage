@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Beer Filling Game</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Germania+One|Roboto+Condensed');
+
+        html { font-size:16px; }
+        body {
+            font-family: 'Roboto Condensed', sans-serif;
+            background: #fdfdfd;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+        h1,h2,h3 { font-family: 'Germania One', Arial,sans-serif; margin: 5px 0; }
+        h1 { font-size: 3rem; margin-top: 20px; }
+
+        #tap-container { position: absolute; top: 100px; left: 50px; }
+        #tap {
+            width:120px; background: #ddd; height:35px; margin:140px 0 0 0;
+            position:relative; border-top-left-radius:5px; border-bottom-left-radius:5px;
+        }
+        #tap:after {
+            content:""; display:block; position:absolute; border-top: 70px solid #ddd;
+            border-left: 10px solid transparent; border-right: 10px solid transparent;
+            border-radius:0 0 40px 40px; height: 0; width: 20px; top:10px; right:10px;
+            transform:rotate(-20deg); z-index:2;
+        }
+        #tap:before {
+            content:""; display:block; position:absolute; width:70px; height:60px;
+            background:grey; left:-20px; top:-15px; border-radius: 0px 20px 20px 0px;
+        }
+        #handle {
+            border-top: 100px solid black; border-left: 10px solid transparent;
+            border-right: 10px solid transparent; width:20px; position:absolute;
+            top:30px; left:80px; border-radius: 10px 10px 0 0; z-index:3; cursor: pointer;
+        }
+        #handle:before {
+            content:""; display:block; width:30px; height:30px; background:lightgrey;
+            position:absolute; bottom:-20px; left:-5px; border-radius:20px 20px 10px 10px
+        }
+        #handle:hover { transform:rotate(6deg); transform-origin: center bottom; }
+
+        #pour {
+            position:absolute; left:92px; top:210px; width:16px; height:0px;
+            z-index:1; background:rgba(229,197,57,1); transition:0s;
+        }
+        #pour.pouring { height:230px; transition:800ms ease; }
+
+        #mug-container { position:relative; margin-top: 120px; margin-left: 100px; }
+        #mug {
+            border:20px solid #eee; border-bottom-width:30px; width:120px; height:200px;
+            border-top:none; border-radius: 0 0 10px 10px; position:relative; cursor: pointer;
+        }
+        #mug:before {
+            position:absolute; content:""; display:block; bottom:-40px;
+            height:30px; width:180px; left:-30px; background:#eee;
+        }
+        #mug:after {
+            position:absolute; content:""; display:block; right:-80px; top:30px;
+            width:40px; height:110px; border:25px solid #eee; border-left:none;
+            border-radius:0 50px 150px 0;
+        }
+        #beer {
+            width:100%; height:0%; max-height:100%; position:absolute; bottom:0; left:0;
+            background: linear-gradient(rgba(255,255,255,1) 0%, rgba(255,255,255,1) 35%, rgba(237,237,173,1) 43%, rgba(229,197,57,1) 44%, rgba(229,197,57,1) 100%);
+            background-repeat: repeat; background-size:100% 200%;
+        }
+
+        @keyframes beerFill { 0% { height:0%; } 100% { height:100%; } }
+        #beer.fill {
+            animation-name:beerFill; animation-duration:10s;
+            animation-fill-mode:forwards; background-position:0% 70%;
+        }
+
+        .helper { text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+
+    <h1>Fill the mug <span id="target">0</span>%</h1>
+    <h2 id="percent-filled">Percent Filled: 0%</h2>
+    <h3 id="result"></h3>
+    <p class="helper tap">Hover over the black handle to fill</p>
+
+    <div id="tap-container">
+        <div id="tap"></div>
+        <div id="handle"></div>
+        <div id="pour"></div>
+    </div>
+
+    <div id="mug-container">
+        <div id="mug">
+            <div id="beer"></div>
+        </div>
+        <p class="helper mug">Click the mug to reset</p>
+    </div>
+
+    <script>
+        var mugHeight;
+        var beerHeight;
+        var percentFilled;
+        var roundedPercent = 0;
+        var game = Math.floor((Math.random() * 100) + 1);
+
+        function getHeights(){
+            mugHeight = $('#mug').height();
+            beerHeight = $('#beer').height();
+            percentFilled = (beerHeight / mugHeight) * 100;
+            roundedPercent = Math.round(percentFilled);
+            $('#percent-filled').html('Percent Filled: ' + roundedPercent + '%');
+        }
+
+        $('#handle').hover(
+            function(){
+                $('#beer').addClass('fill');
+                $('#beer').css('animation-play-state', 'running');
+                $('#pour').addClass('pouring');
+                // Continuous update while pouring
+                this.updateTimer = setInterval(getHeights, 50);
+            },
+            function(){
+                clearInterval(this.updateTimer);
+                getHeights();
+                $('#beer').css('animation-play-state', 'paused');
+                $('#pour').removeClass('pouring');
+                
+                if (roundedPercent > 0) {
+                    if (roundedPercent === game) {
+                        $('#result').html('Nailed it! Good job!');
+                    } else if(Math.abs(game - roundedPercent) < 5){
+                        $('#result').html('Eh. Close enough.');
+                    } else {
+                        $('#result').html('You stink');
+                    }
+                }
+            }
+        );
+
+        $('#mug').click(function(){
+            $('#beer').removeClass('fill');
+            $('#beer').css('height', '0%');
+            roundedPercent = 0;
+            $('#percent-filled').html('Percent Filled: 0%');
+            $('#result').html('');
+            game = Math.floor((Math.random() * 100) + 1);
+            $('#target').html(game);  
+        });
+
+        $(document).ready(function(){
+            $('#target').html(game);  
+        });
+    </script>
+</body>
+</html>

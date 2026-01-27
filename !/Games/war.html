@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Last War</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mojs/core"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Roboto');
+
+        :root {
+            --green: #9ff1a5;
+            --red: #ff9292;
+            --dim: 62px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #f8f994;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1, h2 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: bold;
+            color: #333;
+            margin: 10px;
+        }
+
+        h1 { font-size: 40px; }
+        p { font-family: 'Roboto', sans-serif; font-size: 18px; color: #333; margin: 10px; }
+        .bold { font-weight: 900; }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game {
+            width: 540px;
+            height: 650px;
+            border-radius: 9px;
+            background-color: #333;
+            padding: 5px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            height: 100px;
+            width: 100px;
+            margin: 0;
+            padding: 0;
+            border-radius: 9px;
+            border: 4px solid #333;
+            background-color: #f1c97c;
+            background-position: center;
+            background-size: 70%;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .green { background-color: var(--green); animation: getIn .3s; }
+        .tree { background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgNDM1LjYzNyA0MzUuNjM3IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA0MzUuNjM3IDQzNS42Mzc7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxyZWN0IHg9IjIwMS44NzQiIHk9IjM1NC4wMzciIHN0eWxlPSJmaWxsOiNFREFFNzg7IiB3aWR0aD0iMzQuNCIgaGVpZ2h0PSI3NC40Ii8+DQo8cmVjdCB4PSIyMDEuODc0IiB5PSIzNTQuMDM3IiBzdHlsZT0iZmlsbDojRjlDMDk1OyIgd2lkdGg9IjEyLjgiIGhlaWdodD0iNzQuNCIvPg0KPHJlY3QgeD0iMjIxLjg3NCIgeT0iMzU0LjAzNyIgc3R5bGU9ImZpbGw6I0Q2OTM2NTsiIHdpZHRoPSIxMy42IiBoZWlnaHQ9Ijc0LjQiLz4NCjxwb2x5Z29uIHN0eWxlPSJmaWxsOiMyNEJBNzM7IiBwb2ludHM9IjcwLjY3NCwzNTQuMDM3IDEzMy4wNzQsMjc2LjQzNyA4OC4yNzQsMjc2LjQzNyAxNTguNjc0LDE3OS42MzcgMTEzLjg3NCwxNzkuNjM3IA0KCTE3OS40NzQsOTkuNjM3IDEzOS40NzQsOTkuNjM3IDIxOC42NzQsNy42MzcgMjk3Ljg3NCw5OS42MzcgMjU3Ljg3NCw5OS42MzcgMzIzLjQ3NCwxNzkuNjM3IDI3OC42NzQsMTc5LjYzNyAzNDkuMDc0LDI3Ni40MzcgDQoJMzA0LjI3NCwyNzYuNDM3IDM2Ni42NzQsMzU0LjAzNyAiLz4NCjwvc3ZnPg=='); }
+        .red { background-color: var(--red); animation: getIn1 .3s; }
+        .factory { background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB2aWV3Qm94PSIwIDAgNTEyLjAwMSA1MTIuMDAxIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1MTIuMDAxIDUxMi4wMDE7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxwYXRoIHN0eWxlPSJmaWxsOiNFM0UzRTM7IiBkPSJNMzc5LjAwMSwzMzguODc2di04MC4xMmwtMTIzLDgwdi04MGwtMTE2LjUsNzUuNjhsLTkuNTYtMTE4LjU2aC05Ni42MWwtMC4yNi0wLjAybC0xOS44NCwyNDYuMDENCgljMC4wOTcsMC4wMSwwLjEsMC4wMSwwLjEsMC4wMWwtMC4xLTAuMDFsLTMuMjMsNDAuMDFoMTQzaDM0OXYtMjQzTDM3OS4wMDEsMzM4Ljg3NnogTTE0OS42NzEsNDYxLjg3NkwxNDkuNjcxLDQ2MS44NzZsMC4xLTAuMDENCglMMTQ5LjY3MSw0NjEuODc2eiIvPg0KPC9zdmc+'); }
+
+        .won, .init {
+            z-index: 999;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            border: 8px solid #333;
+            border-radius: 7px;
+            width: 500px;
+            height: 250px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .won { background-color: var(--green); display: none; }
+        .init { background-color: var(--red); }
+        .hidden { display: none; }
+
+        .floating {
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 20px;
+            display: inline-block;
+            animation: floating 1.5s infinite ease-in-out;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes getIn { from { background-size: 0%; } to { background-size: 70%; } }
+        @keyframes getIn1 { from { background-size: 0%; } to { background-size: 70%; } }
+
+        @media (max-width: 500px) {
+            .game { width: 330px; height: 400px; }
+            .box { width: 66px; height: 66px; }
+            .won, .init { width: 90%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="init">
+        <h1>WE NEED YOU!</h1>
+        <p>Click squares to plant trees. Hurry or the factories will colonize us!</p>
+        <p class="floating bold start-trigger">START GAME</p>
+    </div>
+
+    <div class="won">
+        <h1>YOU WON!</h1>
+        <p class="floating replay bold">SAVE THE WORLD AGAIN</p>
+    </div>
+
+    <div class="container">
+        <div class="game"></div>
+    </div>
+
+    <script>
+        const gameContainer = document.querySelector('.game');
+        const initScreen = document.querySelector('.init');
+        const wonScreen = document.querySelector('.won');
+        
+        let arrFactory = [];
+        let arrTree = [];
+        let newFactory;
+        let interval = 800;
+        let boxes = [];
+
+        function createGame() {
+            for (let i = 0; i < 30; i++) {
+                let b = document.createElement('div');
+                b.classList.add('box');
+                b.setAttribute('data-value', i);
+                gameContainer.appendChild(b);
+                b.addEventListener('click', addTree);
+                b.addEventListener('click', fireBurst);
+                boxes.push(b);
+            }
+        }
+
+        function addTree(e) {
+            let c = e.target;
+            let val = c.dataset.value;
+
+            if (!arrTree.includes(val)) {
+                arrTree.push(val);
+                
+                if (arrFactory.includes(val)) {
+                    arrFactory.splice(arrFactory.indexOf(val), 1);
+                }
+
+                c.classList.remove('red', 'factory');
+                c.classList.add('green', 'tree');
+
+                if (arrTree.length === 30) {
+                    gameWon();
+                }
+            }
+        }
+
+        function randomFactory() {
+            let g = Math.floor(Math.random() * 30);
+            let val = boxes[g].dataset.value;
+
+            if (!arrFactory.includes(val)) {
+                arrFactory.push(val);
+                boxes[g].classList.add('red', 'factory');
+                boxes[g].classList.remove('green', 'tree');
+
+                if (arrTree.includes(val)) {
+                    arrTree.splice(arrTree.indexOf(val), 1);
+                }
+
+                if (arrFactory.length === 30) {
+                    clearInterval(newFactory);
+                    alert("The factories won... Refresh to try again.");
+                }
+            }
+        }
+
+        function gameWon() {
+            clearInterval(newFactory);
+            wonScreen.style.display = 'block';
+        }
+
+        function fireBurst(e) {
+            const rect = e.target.getBoundingClientRect();
+            new mojs.Burst({
+                left: rect.left + (rect.width / 2),
+                top: rect.top + (rect.height / 2),
+                count: 9,
+                radius: {40: 80},
+                children: { fill: ['#9ff1a5', '#fff'] }
+            }).play();
+        }
+
+        document.querySelector('.start-trigger').addEventListener('click', () => {
+            initScreen.style.display = 'none';
+            newFactory = setInterval(randomFactory, interval);
+        });
+
+        document.querySelector('.replay').addEventListener('click', () => {
+            location.reload();
+        });
+
+        createGame();
+    </script>
+</body>
+</html>

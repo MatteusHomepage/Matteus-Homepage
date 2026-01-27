@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac DOOM</title>
+    <link href="https://fonts.googleapis.com/css?family=Gloria+Hallelujah|Share+Tech|Trade+Winds" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; }
+        
+        body {
+            background-color: #FDE3A7;
+            transition-duration: 0.5s;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #container { width: 100%; max-width: 800px; text-align: center; }
+
+        /* Narrative Screens */
+        .game-narrative {
+            margin: 0 auto;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 700px;
+            flex-direction: column;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .game-narrative-text {
+            font-family: 'Share Tech', sans-serif;
+            font-size: 2em;
+            margin: 10px;
+        }
+
+        .game-btn {
+            font-family: 'Share Tech', sans-serif;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 20px;
+            background-color: #d35400;
+            padding: 10px 20px;
+            border: solid #F89406 2px;
+            text-decoration: none;
+            margin: 20px;
+            cursor: pointer;
+        }
+
+        .game-btn:hover { background-color: #e67e22; }
+
+        /* Header */
+        .dramatic-text {
+            font-family: 'Trade Winds', cursive;
+            font-size: 3em;
+            color: #c0392b;
+        }
+
+        /* Grid Layout */
+        #game-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .row { display: flex; flex-direction: row; }
+
+        .cell {
+            font-family: 'Gloria Hallelujah', cursive;
+            color: #FFFFFF;
+            background-color: #121a21;
+            text-align: center;
+            width: 100px;
+            height: 100px;
+            line-height: 100px; /* Center text vertically */
+            font-size: 3em;
+            margin: 5px;
+            border-radius: 10px;
+            box-shadow: 6px 6px 0px 0px #090d10;
+            transition-duration: 0.5s;
+            cursor: pointer;
+        }
+
+        .cell:hover { color: #e74c3c; background-color: #34495e; }
+
+        .cell-selected {
+            color: #c0392b;
+            transform: translate(3px,3px);
+            box-shadow: 3px 3px 0px 0px #000;
+            background-color: #121a21;
+        }
+
+        .cell-win {
+            color: #e74c3c;
+            background-color: #34495e;
+            transform: scale(1.05);
+        }
+
+        /* Logic Screens */
+        #game-configuration, #game-over {
+            font-family: 'Share Tech', sans-serif;
+            color: white;
+            padding: 20px;
+        }
+
+        .computer-threat {
+            font-family: 'Trade Winds', cursive;
+            font-size: 1.5em;
+            margin-top: 20px;
+            color: #c0392b;
+            min-height: 1.5em;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+
+    <div class="game-narrative" id="game-narrative-one">
+        <p class="game-narrative-text">In a world where two forces battle for domination, only one will draw the line.</p>
+        <button class="game-btn" id="narrative-one-btn">CONTINUE</button>
+    </div>
+
+    <div class="game-narrative" id="game-narrative-two" style="display:none;">
+        <p class="game-narrative-text">The year is 2048. You are a cybernetically enhanced space marine with no memory of your past.</p>
+        <button class="game-btn" id="narrative-two-btn">PROCEED</button>
+    </div>
+
+    <div class="game-narrative" id="game-narrative-three" style="display:none;">
+        <p class="game-narrative-text">Do you have the strength to survive Tic-Tac-Toe?</p>
+        <button class="game-btn" id="narrative-three-btn">YES</button>
+    </div>
+
+    <div id="header" style="display:none;">
+        <p class="dramatic-text">
+            <span id="tic-text">Tic </span>
+            <span id="tac-text">Tac </span>
+            <span id="doom-text">DOOM</span>
+        </p>
+    </div>
+
+    <div id="game-configuration" style="display:none;"> 
+        <h2>Choose your mark</h2>
+        <div id="identity-selection" class="row">
+            <div class="cell identity-cell" value="X">X</div>
+            <div class="cell identity-cell" value="O">O</div>
+        </div>
+    </div>
+
+    <div id="game-grid" style="display:none;">
+        <div class="row">
+            <div class="cell game-cell" id="c00"></div>
+            <div class="cell game-cell" id="c01"></div>
+            <div class="cell game-cell" id="c02"></div>
+        </div>
+        <div class="row">
+            <div class="cell game-cell" id="c10"></div>
+            <div class="cell game-cell" id="c11"></div>
+            <div class="cell game-cell" id="c12"></div>
+        </div>
+        <div class="row">
+            <div class="cell game-cell" id="c20"></div>
+            <div class="cell game-cell" id="c21"></div>
+            <div class="cell game-cell" id="c22"></div>
+        </div>
+        <div class="computer-threat">
+            <p><span id="computer-threat-text"></span></p>
+        </div>
+    </div>
+
+    <div id="game-over" style="display:none;">
+        <h2 id="game-end-heading"></h2>
+        <p id="game-end-subheading"></p>
+        <button class="game-btn" id="game-reset-btn">Play again</button>
+    </div>
+</div>
+
+<script>
+var game = {
+    board: [[null, null, null], [null, null, null], [null, null, null]],
+    playerMark: "",
+    aiMark: "",
+    turnsPlayed: 0,
+    playerTurn: true,
+    nextMove: [null, null],
+    winner: "",
+    gameOver: false
+};
+
+const darkColor = "#2c3e50";
+const computerThreats = ["Prepare to suffer!", "I will destroy you!", "I am invincible!", "You cannot defeat me!", "Fear me!"];
+
+$(document).ready(function() {
+    // Narrative Transitions
+    $("#narrative-one-btn").on('click', function() {
+        $("#game-narrative-one").fadeOut(500, () => $("#game-narrative-two").fadeIn(500));
+    });
+
+    $("#narrative-two-btn").on('click', function() {
+        $("#game-narrative-two").fadeOut(500, () => $("#game-narrative-three").fadeIn(500));
+    });
+
+    $("#narrative-three-btn").on('click', function() {
+        $("#game-narrative-three").fadeOut(500, function() {
+            $("#header").show();
+            $("#tic-text, #tac-text, #doom-text").hide();
+            $("#tic-text").fadeIn(500, () => {
+                $("#tac-text").fadeIn(500, () => {
+                    $("body").css("background-color", darkColor);
+                    $("#doom-text").fadeIn(500, () => {
+                        $("#game-configuration").fadeIn(500);
+                    });
+                });
+            });
+        });
+    });
+
+    // Mark Selection
+    $(".identity-cell").on('click', function() {
+        game.playerMark = $(this).attr("value");
+        game.aiMark = (game.playerMark === "X") ? "O" : "X";
+        $("#game-configuration").hide();
+        $("#game-grid").fadeIn(500);
+    });
+
+    // Game Logic
+    $(".game-cell").on('click', function() {
+        if (!game.playerTurn || game.gameOver) return;
+        let id = $(this).attr("id");
+        let r = parseInt(id[1]), c = parseInt(id[2]);
+
+        if (game.board[r][c] === null) {
+            makePlay(game.playerMark, r, c);
+            if (!checkPlay(game.playerMark)) aiPlay();
+        }
+    });
+
+    function makePlay(mark, r, c) {
+        game.board[r][c] = mark;
+        game.turnsPlayed++;
+        $(`#c${r}${c}`).text(mark).addClass("cell-selected");
+    }
+
+    function aiPlay() {
+        game.playerTurn = false;
+        setTimeout(() => {
+            minimax(game, 0);
+            makePlay(game.aiMark, game.nextMove[0], game.nextMove[1]);
+            
+            let threat = computerThreats[Math.floor(Math.random() * computerThreats.length)];
+            $("#computer-threat-text").text(threat).fadeIn(200).delay(1500).fadeOut(200);
+            
+            checkPlay(game.aiMark);
+            game.playerTurn = true;
+        }, 800);
+    }
+
+    function checkPlay(mark) {
+        if (checkWin(game)) {
+            game.gameOver = true;
+            highlightWin();
+            setTimeout(() => showGameOver(mark), 1500);
+            return true;
+        } else if (game.turnsPlayed >= 9) {
+            game.gameOver = true;
+            setTimeout(() => showGameOver("draw"), 1000);
+            return true;
+        }
+        return false;
+    }
+
+    function checkWin(g) {
+        const b = g.board;
+        // Rows & Cols
+        for (let i = 0; i < 3; i++) {
+            if (b[i][0] && b[i][0] === b[i][1] && b[i][0] === b[i][2]) return true;
+            if (b[0][i] && b[0][i] === b[1][i] && b[0][i] === b[2][i]) return true;
+        }
+        // Diagonals
+        if (b[0][0] && b[0][0] === b[1][1] && b[0][0] === b[2][2]) return true;
+        if (b[0][2] && b[0][2] === b[1][1] && b[0][2] === b[2][0]) return true;
+        return false;
+    }
+
+    function highlightWin() {
+        const b = game.board;
+        for (let i = 0; i < 3; i++) {
+            if (b[i][0] && b[i][0] === b[i][1] && b[i][0] === b[i][2]) $(`#c${i}0, #c${i}1, #c${i}2`).addClass("cell-win");
+            if (b[0][i] && b[0][i] === b[1][i] && b[0][i] === b[2][i]) $(`#c0${i}, #c1${i}, #c2${i}`).addClass("cell-win");
+        }
+        if (b[0][0] && b[0][0] === b[1][1] && b[0][0] === b[2][2]) $("#c00, #c11, #c22").addClass("cell-win");
+        if (b[0][2] && b[0][2] === b[1][1] && b[0][2] === b[2][0]) $("#c02, #c11, #c20").addClass("cell-win");
+    }
+
+    function showGameOver(winner) {
+        $("#game-grid").hide();
+        $("#game-over").fadeIn(500);
+        if (winner === "draw") {
+            $("#game-end-heading").text("IT IS A DRAW");
+            $("#game-end-subheading").text("The feud continues in another dimension...");
+        } else {
+            $("#game-end-heading").text(winner === game.playerMark ? "VICTORY!" : "DEFEAT!");
+            $("#game-end-subheading").text(winner === game.playerMark ? "You survived Tic Tac Doom." : "The machine reigns supreme.");
+        }
+    }
+
+    $("#game-reset-btn").on('click', () => location.reload());
+
+    // Minimax Unbeatable Logic
+    function minimax(state, depth) {
+        if (checkWin(state)) return state.playerTurn ? -10 + depth : 10 - depth;
+        if (state.turnsPlayed >= 9) return 0;
+
+        let moves = [];
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                if (state.board[r][c] === null) moves.push([r, c]);
+            }
+        }
+
+        let scores = [];
+        moves.forEach(m => {
+            let newState = JSON.parse(JSON.stringify(state));
+            newState.board[m[0]][m[1]] = newState.playerTurn ? newState.playerMark : newState.aiMark;
+            newState.turnsPlayed++;
+            newState.playerTurn = !newState.playerTurn;
+            scores.push(minimax(newState, depth + 1));
+        });
+
+        if (!state.playerTurn) { // AI Turn (Max)
+            let maxIdx = scores.indexOf(Math.max(...scores));
+            game.nextMove = moves[maxIdx];
+            return scores[maxIdx];
+        } else { // Player Turn (Min)
+            return Math.min(...scores);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

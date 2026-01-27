@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simon Game - Sergio Gaspar</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    
+    <style>
+        @import url(https://fonts.googleapis.com/css?family=Oswald:400,300);
+        
+        body { background: #1E1E24; color: white; font-family: 'Oswald', sans-serif; margin: 0; padding: 0; }
+
+        .container {
+            position: relative;
+            height: 550px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .simon {
+            height: 150px;
+            width: 150px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            border-radius: 50%;
+            font-family: 'Oswald';
+            font-size: 30px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: background 0.2s ease-in, transform 0.1s linear;
+            outline: none;
+        }
+
+        /* Button Positions */
+        #yellow { left: 10%; border: #EFBD26 solid 15px; color: #EFBD26; }
+        #blue   { left: 30%; border: #006992 solid 15px; color: #006992; }
+        #red    { left: 50%; border: #D63B29 solid 15px; color: #D63B29; }
+        #green  { left: 70%; border: #00CC66 solid 15px; color: #00CC66; }
+
+        /* Hover & Active Effects */
+        .simon:hover { color: #1E1E24; }
+        #yellow:hover { background: #EFBD26; }
+        #blue:hover   { background: #006992; }
+        #red:hover    { background: #D63B29; }
+        #green:hover  { background: #00CC66; }
+        .simon:active { transform: translateY(-50%) scale(1.1); }
+
+        /* Animation Classes */
+        .clicked-yellow { background: #EFBD26 !important; color: #1E1E24 !important; }
+        .clicked-red    { background: #D63B29 !important; color: #1E1E24 !important; }
+        .clicked-blue   { background: #006992 !important; color: #1E1E24 !important; }
+        .clicked-green  { background: #00CC66 !important; color: #1E1E24 !important; }
+
+        .options-container {
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        .start {
+            background: none;
+            border: #FF8D2A solid 8px;
+            color: #FF7700;
+            font-family: 'Oswald';
+            font-size: 25px;
+            padding: 10px 30px;
+            cursor: pointer;
+            border-radius: 15px;
+            transition: 0.3s;
+        }
+        .start:hover { background: #FF8D2A; color: #1E1E24; }
+
+        .strict {
+            display: block;
+            margin: 10px auto;
+            background: none;
+            border: none;
+            color: #09925C;
+            cursor: pointer;
+            font-family: 'Oswald';
+            font-size: 18px;
+        }
+
+        .steps, .status {
+            font-size: 22px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .steps { color: #21618C; }
+        .status { color: #F1E4F3; height: 30px; }
+
+        .disabled { pointer-events: none; opacity: 0.8; }
+
+        .footer {
+            background-color: #222;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .footer a { color: #0431B4; text-decoration: none; margin: 0 10px; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="options-container">
+    <div class="status">Press Start to Play</div>
+    <div class="steps">Steps: 0</div>
+    <button class="start">Start Game</button>
+    <button class="strict">difficulty: easy</button>
+</div>
+
+<div class="container">
+    <button class="simon" id="red">Red</button>
+    <button class="simon" id="blue">Blue</button>
+    <button class="simon" id="yellow">Yellow</button>
+    <button class="simon" id="green">Green</button>
+</div>
+
+<footer class="footer">
+    <div>Created by Sérgio Gaspar for freeCodeCamp</div>
+    <div class="social-icons">
+        <a href="#"><i class="ion-social-github"></i></a>
+        <a href="#"><i class="ion-social-twitter"></i></a>
+    </div>
+</footer>
+
+<script>
+$(document).ready(function() {
+    var colors = ['#yellow', '#red', '#green', '#blue'];
+    var maxSeq = 20;
+    var sounds = {
+        red: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound1.mp3'),
+        green: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound2.mp3'),
+        yellow: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound3.mp3'),
+        blue: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound4.mp3')
+    };
+
+    function animateClick(id) {
+        var colorName = id.replace('#', '');
+        $(id).addClass('clicked-' + colorName);
+        
+        // Play sound based on color
+        if(id.includes('red')) sounds.red.play();
+        if(id.includes('green')) sounds.green.play();
+        if(id.includes('yellow')) sounds.yellow.play();
+        if(id.includes('blue')) sounds.blue.play();
+
+        setTimeout(function() {
+            $(id).removeClass('clicked-' + colorName);
+        }, 400);
+    }
+
+    var question = {
+        name: 'question',
+        newQuestion: function() {
+            game.values.push(colors[Math.floor(Math.random() * 4)]);
+            game.steps++;
+            $('.steps').html("Steps: " + game.steps);
+        },
+        playQuestion: function() {
+            var i = 0;
+            var t = setInterval(function() {
+                animateClick(game.values[i]);
+                i++;
+                if (i >= game.values.length) {
+                    clearInterval(t);
+                    game.change_state('toAnswers');
+                }
+            }, 800);
+        }
+    };
+
+    var answers = {
+        name: 'answers',
+        index_so_far: 0,
+        init_answers: function() {
+            $(".simon").removeClass('disabled');
+            this.index_so_far = 0;
+        },
+        check_answers: function(id) {
+            if (id == game.values[this.index_so_far]) {
+                this.index_so_far++;
+                if (this.index_so_far >= game.values.length) {
+                    game.change_state('toQuestion');
+                }
+            } else {
+                game.lose();
+            }
+        }
+    };
+
+    var game = {
+        state: 'idle',
+        values: [],
+        mode: 'easy',
+        steps: 0,
+        reset: function() {
+            this.steps = 0;
+            this.values = [];
+            $('.steps').html("Steps: 0");
+        },
+        start: function() {
+            this.reset();
+            $('.status').html('Watch the sequence...');
+            $('.simon').addClass('disabled');
+            question.newQuestion();
+            question.playQuestion();
+        },
+        change_state: function(target) {
+            if (target == 'toAnswers') {
+                this.state = 'answers';
+                $('.status').html('Your turn!');
+                answers.init_answers();
+            } else {
+                this.state = 'question';
+                $('.status').html('Watch...');
+                $('.simon').addClass('disabled');
+                if (this.steps >= maxSeq) {
+                    this.win();
+                } else {
+                    question.newQuestion();
+                    setTimeout(question.playQuestion, 1000);
+                }
+            }
+        },
+        lose: function() {
+            $('.status').html('Wrong! Try again.');
+            $('.simon').addClass('disabled');
+            if (this.mode == 'strict') {
+                setTimeout(() => this.start(), 1500);
+            } else {
+                setTimeout(() => {
+                    $('.status').html('Watch again...');
+                    question.playQuestion();
+                }, 1500);
+            }
+        },
+        win: function() {
+            $('.status').html('YOU WIN!');
+            this.reset();
+        }
+    };
+
+    $('.simon').on('click', function() {
+        var id = '#' + $(this).attr('id');
+        animateClick(id);
+        if (game.state == 'answers') {
+            answers.check_answers(id);
+        }
+    });
+
+    $('.start').on('click', function() {
+        game.start();
+    });
+
+    $('.strict').on('click', function() {
+        if (game.mode == 'easy') {
+            game.mode = 'strict';
+            $(this).html('difficulty: strict');
+        } else {
+            game.mode = 'easy';
+            $(this).html('difficulty: easy');
+        }
+    });
+});
+</script>
+</body>
+</html>

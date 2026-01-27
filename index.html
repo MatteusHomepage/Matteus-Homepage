@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="A feature-rich custom homepage with search, bookmarks, and customization">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Home">
+<title>New tab</title>
+<link rel="icon" type="image/x-icon" href="googles.ico">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+</head>
+
+<body>
+
+<div id="passwordOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 9999; display: flex; align-items: center; justify-content: center; pointer-events: auto;">
+    <div style="background: rgba(0,0,0,0.65); padding: 40px; border-radius: 18px; text-align: center;">
+        <h2 style="color: #fff; margin-bottom: 20px; font-size: 24px;">Enter Password</h2>
+        <input type="password" id="passwordInput" placeholder="Password" style="width: 280px; padding: 15px; font-size: 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; outline: none; margin-bottom: 15px;">
+        <button id="passwordSubmit" style="width: 100%; padding: 12px; background: #fff; color: #000; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;">Submit</button>
+        <div id="passwordError" style="color: #ff6b6b; margin-top: 15px; font-size: 13px; min-height: 20px;"></div>
+    </div>
+</div>
+
+
+<div id="searchBox">
+    <form id="form">
+        <div class="wrapper">
+         <div id="engineChipLayer"></div>
+            <input id="input" name="q" autocomplete="off" placeholder="Search">
+            <button type="button" id="clear">clear</button>
+        </div>
+    </form>
+</div>
+
+<button id="menuBtn">...</button>
+<input id="bgInput" type="file" accept="image/*">
+<input id="iconInput" type="file" accept="image/*" style="display:none">
+<input id="secretCode" type="text" autocomplete="off">
+
+<div id="announce"></div>
+
+<div id="ctxMenu">
+    <div class="ctx-item" id="ctxEdit">Edit</div>
+    <div class="ctx-item" id="ctxMove">Move</div>
+    <div class="ctx-item delete" id="ctxDelete">Delete</div>
+</div>
+
+<div id="quickAccessOverlay">
+    <div id="quickAccessMenu">
+        <div class="menu-header">
+            <div></div>
+            <span class="header-title">Bookmarks</span> 
+            <button class="close-menu">×</button> <br>
+        </div>
+        <div class="quick-access-grid" id="quickAccessGrid"></div>
+    </div>
+</div>
+
+<div id="menuOverlay">
+    <div id="mainMenu" class="menu-box">
+        <div class="menu-header">
+            <div></div>
+            <span class="header-title">Menu</span>
+            <button class="close-menu">×</button>
+        </div>
+        <button class="menu-option" id="btnChangeBg">Change Background</button>
+        <button class="menu-option" id="btnInfo">Info <span>→</span></button>
+        <button class="menu-option" id="btnBookmarks">Bookmarks <span>→</span></button>
+        <button class="menu-option" id="btnLock">Lock</button>
+        <div class="credits">Created by Matteus Aydin 2026</div>
+    </div>
+
+    <div id="keybindsMenu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-controls">←</button>
+            <span class="header-title">Keybinds</span>
+            <button class="close-menu">×</button>
+        </div>
+        
+        <div class="keybind-list">
+            <div class="keybind-item">
+                <span>Start Typing</span>
+                <div class="keys"><span class="kbd">Any Key</span></div>
+            </div>
+            <div class="keybind-item">
+                <span>Open Search</span>
+                <div class="keys"><span class="kbd">Space</span></div>
+            </div>
+            
+            <div class="keybind-item">
+                <span>Toggle Search Mode</span>
+                <div class="keys"><span class="kbd">Shift</span> <span class="kbd">Space</span></div>
+            </div>
+
+            <div class="keybind-item">
+                <span>Enter History Mode</span>
+                <div class="keys"><span class="kbd">Shift</span><span class="kbd">←</span></div>
+            </div>
+            <div class="keybind-item">
+                <span>Cycle History</span>
+                <div class="keys"><span class="kbd">←</span><span class="kbd">→</span></div>
+            </div>
+            <div class="keybind-item">
+                <span>Clear Input</span>
+                <div class="keys"><span class="kbd">Esc</span></div>
+            </div>
+
+            <div class="keybind-item">
+                <span>Close Input</span>
+                <div class="keys"><span class="kbd">Esc</span> <span class="kbd">Esc</span></div>
+            </div>
+
+            <div class="keybind-item">
+                <span>Quick Bookmarks</span>
+                <div class="keys"><span class="kbd">Shift</span> <span class="kbd">B</span></div>
+            </div>
+         <div class="keybind-item">
+                <span>Command Mode</span>
+                <div class="keys"><span class="kbd">Menu 🠮 Info 🠮 Questions 🠮 Command Mode</span> </div></div>
+
+          <div class="keybind-item">
+                <span>Engine Mode</span>
+                <div class="keys"><span class="kbd">Menu 🠮 Info 🠮 Questions 🠮 Engines</span></div>
+
+          
+            </div>
+        </div>
+    </div>
+
+
+<div id="infoMenu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu">←</button>
+            <span class="header-title">Info</span>
+            <button class="close-menu">×</button>
+        </div>
+        <button class="menu-option" id="btnControls">Controls <span>→</span></button>
+        <button class="menu-option" id="btnQuestions">Questions <span>→</span></button>
+        <button class="menu-option" id="btnCredits">Credits <span>→</span></button>
+
+ 
+    </div>
+
+
+<div id="controlsMenu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-info">←</button>
+            <span class="header-title">Controls</span>
+            <button class="close-menu">×</button>
+        </div>
+        <button class="menu-option" id="btnKeybinds">Keybinds <span>→</span></button>
+        <button class="menu-option" id="btnEngines">Engines List <span>→</span></button>
+        <button class="menu-option" id="btnCommands">Commands List <span>→</span></button>
+ 
+    </div>
+ 
+
+ <div id="questionsMenu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-info">←</button>
+            <span class="header-title">Questions</span>
+            <button class="close-menu">×</button>
+        </div>
+        <button class="menu-option" id="btnQuest1">Currency Converter <span>→</span></button>
+        <button class="menu-option" id="btnQuest2">Calculator <span>→</span></button>
+        <button class="menu-option" id="btnQuest3">Engine Mode <span>→</span></button>
+        <button class="menu-option" id="btnQuest4">Command Mode <span>→</span></button>
+        <button class="menu-option" id="btnQuest5">Bookmarks <span>→</span></button>
+ 
+
+ 
+    </div>
+
+
+ <div id="creditsMenu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-info">←</button>
+            <span class="header-title">Credits</span>
+            <button class="close-menu">×</button>
+        </div>
+        
+<div class="keybind-item">
+                <span>All code and assets have been written and created by Matteus Aydin 2026</span>
+                
+            </div>
+
+  <div class="keybind-item">
+                <span>This website was a project of mine that I have found very interesting. It started off as a small project, but it quickly shifted into this feature rich website.</span>
+                
+            </div>
+
+  <div class="keybind-item">
+                <span>I will continuing to update this website until I don't want to anymore. Thank you for using it, bye!</span>
+                
+            </div>
+    </div>
+
+
+   <div id="quest1Menu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-quest">←</button>
+            <span class="header-title">Currency Converter - FAQ</span>
+            <button class="close-menu">×</button>
+        </div>
+
+     <div class="keybind-item">
+                <span> 
+                To use the currency converter, type /con in the input field. Pressing delete just after the engine chip exits converter mode.
+
+Enter your conversion using the following format:
+Amount FROM TO, with standard three-letter currency codes supported by Google.
+                    Example:
+100 USD EUR
+                </span>
+                
+            </div>
+<div class="keybind-item">
+                <span> 
+The amount is entered first, followed by the source currency and the target currency. All conversions use up-to-date exchange rates. Make sure the currency codes are valid to ensure accurate results.
+                </span>
+
+</div>
+ 
+ <div class="keybind-item">
+                <span> 
+Gold (XAU) and Silver (XAG) also work with conversion.
+                 Example: 100 USD XAG
+                </span>
+                
+            </div>
+
+<div class="keybind-item">
+                <span> 
+Having any problems? Call: 072-891-2800
+                </span>
+                
+            </div>
+    
+    </div>
+
+    <div id="quest2Menu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-quest">←</button>
+            <span class="header-title">Calculator - FAQ</span>
+            <button class="close-menu">×</button>
+        </div>
+
+     <div class="keybind-item">
+                <span> 
+To access the calculator, type /calc in the input field. This enables math mode and allows you to enter calculations directly.
+
+You can use common mathematical operators such as addition, subtracion, multiplication, division, and parentheses to control order of operations. Standard math rules apply.
+
+Example:
+(5 + 3) x 4 / 2
+                </span>
+                
+            </div>
+
+   <div class="keybind-item">
+                <span> 
+To use Addition, type "+",
+For Subtraction, type "-",                 
+If you want Multiplication, type "*"               
+And to use Division, type "/".
+You can also use parentheses              
+                </span>
+                
+            </div>
+
+<div class="keybind-item">
+                <span> 
+Having any problems? Call: 072-891-2800
+                </span>
+                
+            </div>
+     
+        
+    </div>
+
+
+    <div id="quest3Menu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-quest">←</button>
+            <span class="header-title">Engines - FAQ</span>
+            <button class="close-menu">×</button>
+        </div>
+
+ <div class="keybind-item">
+                <span> 
+     
+Engines let you quickly route your input to a specific service or tool. Each engine is activated by typing its shortcut at the start of the input, followed by your query. All engines start with a slash "/".
+                </span>
+                
+            </div>
+
+      <div class="keybind-item">
+                <span> 
+     
+For a list of all inputs, visit Menu 🠮 Info 🠮 Controls 🠮 Engines List or >engines.
+To remove the engine mode, press Delete when your text cursor is just after the chip image.
+                </span>
+                
+            </div>
+
+        <div class="keybind-item">
+                <span> 
+     
+<B>IMPORTANT: AI Engines are not guaranteed to work, they will not work sometimes. Do not call me for these situations.</B>
+                </span>
+                
+            </div>
+
+<div class="keybind-item">
+                <span> 
+     
+Info about the rest of the engines:
+Using the Youtube engine will let you search on youtube, but from this website.
+The DuckDuckGO and Bing are similar to not using any engine, but instead it will search it with a different search engine.
+Using the Amazon engine allows you to search for amazon products, the wikipedia one is for wikipedia articles, the reddit is for reddit discussions. Calculator is for math and Currency Converter is for converting currencies. For more info about /calc and /con, please visit the designated help pages.
+                
+                 
+                </span>
+                
+            </div>     
+
+<div class="keybind-item">
+                <span> 
+The AI's, including Gemini, Chatgpt, Claude and Copilot will all attempt to fetch your query and answer it, but almost always fails. I still wanted to keep the AI's, but currently there is no way to make them work. Best thing you can do is being logged in to the services, that increases the chance of success. 
+
+                </span>
+                
+            </div>
+
+     
+    
+<div class="keybind-item">
+                <span> 
+This website also has a command mode, for more info on that, please visit Menu 🠮 Info 🠮 Questions 🠮 Command Mode or >quest4
+
+                </span>
+
+</div>
+ 
+     
+<div class="keybind-item">
+                <span> 
+Having any problems? Call: 072-891-2800
+                </span>
+                
+            </div>
+
+     
+    </div>
+
+
+<div id="quest5Menu" class="menu-box">
+    <div class="menu-header">
+        <button class="back-menu-quest">←</button>
+        <span class="header-title">Bookmarks - FAQ</span>
+        <button class="close-menu">×</button>
+    </div>
+
+    <div class="keybind-item">
+        <span> 
+Bookmarks let you save your favorite websites for quick access. You can organize them into folders and access them instantly using Shift + B or through the menu.
+
+To add a bookmark, open Menu → Bookmarks → + Add Folder (to create a folder first), then click on the folder and use + Add Shortcut.
+        </span>
+    </div>
+
+    <div class="keybind-item">
+        <span> 
+Each bookmark can have a custom name (up to 20 characters), URL, color, and even a custom icon image. You can drag and drop images directly onto the upload area or the background button.
+
+Folders can hold up to 12 bookmarks each, and you can have up to 12 folders total.
+        </span>
+    </div>
+
+    <div class="keybind-item">
+        <span> 
+Right-click any bookmark or folder to Edit, Move, or Delete it. Move mode lets you reorder items using arrow keys - press Enter to confirm or Esc to cancel.
+
+You can also manage bookmarks using commands like >bookmark add [folder name] or >bookmark delete [bookmark name].
+        </span>
+    </div>
+
+    <div class="keybind-item">
+        <span> 
+Export your bookmarks as JSON using Manage Bookmarks → Export JSON. This creates a backup file you can import later. Import supports both the custom format and simple bookmark arrays.
+
+Your bookmarks are automatically saved to your browser's localStorage.
+        </span>
+    </div>
+
+    <div class="keybind-item">
+        <span> 
+Having any problems? Call: 072-891-2800
+        </span>
+    </div>
+</div>
+ 
+
+
+
+    <div id="enginesMenu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-controls">←</button>
+            <span class="header-title">Engines</span>
+            <button class="close-menu">×</button>
+        </div>
+        <div class="keybind-list" id="engineList" > 
+
+            </div>
+
+     
+    
+
+
+   
+   
+
+<div class="keybind-item">
+ <span>You can enter command mode with <span class="kbd">/cmd</span>, but also by typing <span class="kbd">></span> </span></div>
+     
+<div class="keybind-item">
+ <span>Engines are case-insensitive, meaning both uppercase and lowercase letters will work.</span></div>
+     
+      <div class="keybind-item">
+ <span>For more information, visit Menu 🠮 Info 🠮 Questions 🠮 Engines or use >quest3 </span></div>
+  
+    </div>
+    
+
+<div id="quest5" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-quest">←</button>
+            <span class="header-title">Bookmarks - FAQ</span>
+            <button class="close-menu">×</button>
+        </div>
+      
+
+            </div>
+ 
+   
+<div id="quest4Menu" class="menu-box">
+        <div class="menu-header">
+            <button class="back-menu-quest">←</button>
+            <span class="header-title">Commands - FAQ</span>
+            <button class="close-menu">×</button>
+        </div>
+
+
+ <div class="keybind-item">
+                <span> 
+Command Mode
+
+Command Mode lets you execute quick actions directly from the input. To activate it, type > followed by a space or by typing /cmd.
+
+Once active, you can enter commands to perform tasks without navigating away from the input. Commands are interpreted immediately, making actions faster and more efficient.
+
+
+                </span>
+                
+            </div>
+<div class="keybind-item">
+<span> 
+
+Use Command Mode whenever you want to control features quickly and directly.
+                
+A list of all current commands is available at Menu 🠮 Info 🠮 Controls Commands List or by typing >Commands
+                </span>
+                
+            </div>
+      
+ 
+     
+<div class="keybind-item">
+                <span> 
+Having any problems? Call: 072-891-2800
+                </span>
+                
+            </div>
+
+
+ 
+       
+            </div>
+
+
+
+
+<div id="commandsMenu" class="menu-box">
+    <div class="menu-header">
+        <button class="back-menu-controls">←</button>
+        <span class="header-title">Commands</span>
+        <button class="close-menu">×</button>
+    </div>
+
+    
+    <div class="menu-scroll">
+
+ <div class="keybind-item">
+ <span>Lock Website </span><div class="keys"><span class="kbd">>Lock</span></div>   
+            </div>    
+
+
+        <div class="keybind-item">
+            <span>Change Background </span><div class="keys"><span class="kbd">>Background</span></div>   
+        </div>
+       <div class="keybind-item">
+ <span>Change Background </span><div class="keys"><span class="kbd">>Background</span></div>   
+            </div>
+  
+<div class="keybind-item">
+ <span>Clear History </span><div class="keys"><span class="kbd">>Clear</span></div>   
+            </div>
+
+<div class="keybind-item">
+ <span>Bookmarks </span><div class="keys"><span class="kbd">>Bookmarks</span></div>   
+            </div>
+
+ <div class="keybind-item">
+ <span>Open Bookmark </span><div class="keys"><span class="kbd">>Bookmark [..]</span></div>   
+            </div>
+  
+  <div class="keybind-item">
+ <span>Add Bookmark </span><div class="keys"><span class="kbd">>Bookmark Add [--] </span></div>   
+            </div>
+
+  <div class="keybind-item">
+ <span>Delete Bookmark </span><div class="keys"><span class="kbd">>Bookmark Delete [..]</span></div>   
+            </div>
+
+      <div class="keybind-item">
+ <span>Add Folder </span><div class="keys"><span class="kbd">>Bookmark Folder Add</span></div>   
+            </div>
+
+      <div class="keybind-item">
+ <span>Delete Folder </span><div class="keys"><span class="kbd">>Bookmark Folder Delete [--]</span></div>   
+            </div>
+
+   <div class="keybind-item">
+ <span>Menu </span><div class="keys"><span class="kbd">>Menu</span></div>   
+            </div>
+
+     <div class="keybind-item">
+ <span>Info </span><div class="keys"><span class="kbd">>Info</span></div>   
+            </div>
+
+     <div class="keybind-item">
+ <span>Controls </span><div class="keys"><span class="kbd">>Controls</span></div>   
+            </div>
+
+     <div class="keybind-item">
+ <span>Questions </span><div class="keys"><span class="kbd">>Questions</span></div>   
+            </div>
+
+  <div class="keybind-item">
+ <span>Keybinds </span><div class="keys"><span class="kbd">>Keybinds</span></div>   
+            </div>
+
+  <div class="keybind-item">
+ <span>Engine List </span><div class="keys"><span class="kbd">>Engines</span></div>   
+            </div>
+
+  <div class="keybind-item">
+ <span>Credits </span><div class="keys"><span class="kbd">>Credits</span></div>   
+            </div>
+
+<div class="keybind-item">
+ <span>Currency Con - FAQ </span><div class="keys"><span class="kbd">>Quest1</span></div>   
+            </div>  
+
+  <div class="keybind-item">
+ <span>Calculator - FAQ </span><div class="keys"><span class="kbd">>Quest2</span></div>   
+            </div>  
+
+
+  <div class="keybind-item">
+ <span>Engine - FAQ </span><div class="keys"><span class="kbd">>Quest3</span></div>   
+            </div>  
+
+  <div class="keybind-item">
+ <span>Commands - FAQ </span><div class="keys"><span class="kbd">>Quest4</span></div>   
+            </div>  
+
+ <div class="keybind-item">
+ <span>Bookmarks - FAQ </span><div class="keys"><span class="kbd">>Quest5</span></div>   
+            </div>      
+
+  
+            
+    </div>
+
+   
+    <div class="menu-footer">
+        <div class="keybind-item">
+            <span>Commands are case-insensitive, meaning both uppercase and lowercase letters will work.</span>
+        </div>
+        <div class="keybind-item">
+            <span>For more information, visit Menu 🠮 Info 🠮 Questions 🠮 Command Mode or >quest4 </span>
+        </div>
+        <div class="keybind-item">
+            <span>[..] represents the name of a bookmark, and [--] the name of a folder. Other pages are to have different logic</span>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+    <div id="bookmarksMenu" class="menu-box">
+    <div class="menu-header">
+        <button class="back-menu">←</button>
+        <span class="header-title">Bookmarks</span>
+        <button class="close-menu">×</button>
+    </div>
+    
+    <div class="bookmarks-grid" id="bookmarksGrid"></div>
+
+    <button id="btnAddFolder">+ Add Folder</button>
+    <button id="btnManageBookmarks">Manage Bookmarks</button>
+    <div id="manageButtons" class="manage-buttons-hidden">
+        <button id="btnExportJSON">Export JSON</button>
+        <button id="btnImportJSON">Import JSON</button>
+    </div>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none">
+    <div class="limit-text" id="limitText">0/12</div>
+</div>
+
+<div id="folderViewMenu" class="menu-box">
+    <div class="menu-header">
+        <button class="back-to-bookmarks">←</button>
+        <span class="header-title" id="folderViewTitle">Folder</span>
+        <button class="close-menu">×</button>
+    </div>
+    
+    <div class="bookmarks-grid" id="folderViewGrid"></div>
+
+    <button id="btnAddShortcutInFolder">+ Add Shortcut</button>
+    <div class="limit-text" id="folderLimitText">0/12</div>
+</div>
+
+<div id="addShortcutMenu" class="menu-box">
+    <div class="menu-header">
+        <button class="back-menu" id="backFromAdd">←</button>
+        <span class="header-title" id="shortcutFormTitle">Add Shortcut</span>
+        <button class="close-menu">×</button>
+    </div>
+
+    <div class="shortcut-form">
+        <div class="preview-container" id="previewIcon">A</div>
+        
+    <div class="icon-tools">
+    <input type="color" id="bmColor" class="color-picker" value="#333333">
+    <input type="color" id="bmTextColor" class="color-picker" value="#ffffff" title="Text Color">
+    <button class="file-btn" id="btnUploadIcon">Upload Image</button>
+</div>
+
+        <div class="form-group">
+            <input type="text" id="bmName" class="form-input" placeholder="Name" maxlength="20">
+            <div class="char-count" id="bmNameCount">0/20</div>
+        </div>
+
+        <div class="form-group">
+            <input type="text" id="bmUrl" class="form-input" placeholder="https://example.com">
+        </div>
+
+        <div class="action-btns">
+            <button class="btn-cancel" id="btnCancelBm">Cancel</button>
+            <button class="btn-save" id="btnSaveBm">Save</button>
+        </div>
+    </div>
+</div>
+
+<div id="addFolderMenu" class="menu-box">
+    <div class="menu-header">
+        <button class="back-menu" id="backFromAddFolder">←</button>
+        <span class="header-title" id="folderFormTitle">Add Folder</span>
+        <button class="close-menu">×</button>
+    </div>
+
+    <div class="shortcut-form">
+        <div class="preview-container" id="previewFolder">📁</div>
+        
+       <div class="icon-tools">
+    <input type="color" id="folderColor" class="color-picker" value="#333333" title="Background Color">
+    <input type="color" id="folderTextColor" class="color-picker" value="#ffffff" title="Text Color">
+</div>
+
+        <div class="form-group">
+            <input type="text" id="folderName" class="form-input" placeholder="Folder Name" maxlength="20">
+            <div class="char-count" id="folderNameCount">0/20</div>
+        </div>
+
+        <div class="action-btns">
+            <button class="btn-cancel" id="btnCancelFolder">Cancel</button>
+            <button class="btn-save" id="btnSaveFolder">Save</button>
+        </div>
+    </div>
+</div>
+
+
+
+ 
+<script src="index.js"></script>
+<script>
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then((registration) => {
+        console.log('Service Worker registered successfully:', registration.scope);
+      })
+      .catch((error) => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
+}
+</script>
+</body>
+</html>
+</body>
+</html>

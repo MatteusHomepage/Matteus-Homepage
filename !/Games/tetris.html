@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Backbone Tetris</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.1/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.0/backbone-min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Lato:400,700');
+        body {
+            font-family: 'Lato', sans-serif;
+            text-align: center;
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        #controls { margin-bottom: 20px; }
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: #444;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 4px;
+        }
+        button:hover { background: #666; }
+        #board {
+            margin: 0 auto;
+            display: inline-block;
+            position: relative;
+            background: #111;
+        }
+        canvas {
+            border: 2px solid #333;
+            display: block;
+        }
+        #message {
+            position: absolute;
+            color: #ff3333;
+            font-size: 32px;
+            font-weight: bold;
+            width: 100%;
+            top: 40%;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
+        }
+        #gridContainer {
+            display: none; /* Hide debug grid for cleaner look */
+            color: #565656;
+            font-size: 10px;
+            text-align: left;
+        }
+        .gridOn { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>Backbone Tetris</h1>
+    <div id="controls">
+        <button id="pause">Pause (p)</button>
+        <button id="mute">Mute (m)</button>
+        <button id="new_game">New Game (n)</button>
+    </div>
+
+    <div id="board">
+        <canvas id="tetrisCanvas" width="240" height="400"></canvas>
+        <div id="message"></div>
+    </div>
+
+    <div id="gridContainer"><div class="grid"></div></div>
+
+    <audio id="bgMusic" loop>
+        <source src="tetris.mp3" type="audio/mpeg">
+    </audio>
+
+<script>
+var app = app || {};
+
+// --- MODELS ---
+app.Block = Backbone.Model.extend({
+    defaults: { x: 3, y: 0 },
+    initialize: function() {
+        var shape = this.get('shape');
+        this.set('width', shape[0].length);
+        this.set('height', shape.length);
+    }
+});
+
+app.Board = Backbone.Collection.extend({ model: app.Block });
+
+// --- VIEWS ---
+app.BlockView = Backbone.View.extend({
+    render: function() {
+        var shape = this.model.get('shape');
+        var x_pos = this.model.get('x') * app.blockSize;
+        var y_pos = this.model.get('y') * app.blockSize;
+        app.context.strokeStyle = 'white';
+        app.context.lineWidth = 1;
+        
+        for (var y = 0; y < shape.length; y++) {
+            for (var x = 0; x < shape[y].length; x++) {
+                if (shape[y][x]) {
+                    app.context.strokeRect(x_pos + (x * app.blockSize), y_pos + (y * app.blockSize), app.blockSize, app.blockSize);
+                }
+            }
+        }
+        return this;
+    }
+});
+
+app.BoardView = Backbone.View.extend({
+    el: 'body',
+    paused: false,
+    muted: false,
+    
+    initialize: function() {
+        this.canvas = document.getElementById("tetrisCanvas");
+        app.context = this.canvas.getContext("2d");
+        app.blockSize = 20;
+        app.width = this.canvas.width / app.blockSize;
+        app.height = this.canvas.height / app.blockSize;
+        
+        this.collection = new app.Board();
+        this.gridView = new app.GridView();
+        this.gridView.clearGrid();
+        
+        $(document).on('keydown', _.bind(this.keyAction, this));
+        this.newGame();
+    },
+
+    start: function() {
+        var self = this;
+        clearInterval(app.interval);
+        app.interval = setInterval(function() {
+            self.descend();
+            self.drawAll();
+        }, 800);
+        if(!this.muted) document.getElementById('bgMusic').play().catch(()=>{});
+    },
+
+    drawAll: function() {
+        app.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.gridView.drawGrid();
+        this.collection.each(function(model) {
+            new app.BlockView({model: model}).render();
+        });
+    },
+
+    descend: function() {
+        if (this.paused) return;
+        var self = this;
+        this.collection.each(function(model) {
+            if (model.get('y') + model.get('height') < app.height && self.shapeFits(model.get('shape'), model.get('x'), model.get('y') + 1)) {
+                model.set('y', model.get('y') + 1);
+            } else {
+                self.blockLanded(model);
+            }
+        });
+    },
+
+    blockLanded: function(block) {
+        this.gridView.updateGrid(block);
+        if (block.get('y') <= 0) {
+            this.gameOver();
+            return;
+        }
+        this.checkCompleteRows();
+        this.collection.reset();
+        this.spawnNewBlock();
+    },
+
+    spawnNewBlock: function() {
+        var shapeObj = app.shapes[_.random(app.shapes.length - 1)];
+        this.collection.add(new app.Block({shape: shapeObj.shape}));
+    },
+
+    checkCompleteRows: function() {
+        for (var y = 0; y < app.height; y++) {
+            if (_.every(app.grid[y], function(val){ return val === 1; })) {
+                app.grid.splice(y, 1);
+                app.grid.unshift(new Array(app.width).fill(0));
+            }
+        }
+    },
+
+    shapeFits: function(shape, shapeX, shapeY) {
+        for (var y = 0; y < shape.length; y++) {
+            for (var x = 0; x < shape[y].length; x++) {
+                if (shape[y][x]) {
+                    var checkX = shapeX + x;
+                    var checkY = shapeY + y;
+                    if (checkY >= app.height || app.grid[checkY][checkX] === 1) return false;
+                }
+            }
+        }
+        return true;
+    },
+
+    keyAction: function(e) {
+        if (this.paused) { if(e.keyCode == 80) this.togglePause(); return; }
+        var model = this.collection.at(0);
+        if (!model) return;
+
+        switch(e.keyCode) {
+            case 37: // Left
+                if (model.get('x') > 0 && this.shapeFits(model.get('shape'), model.get('x')-1, model.get('y'))) model.set('x', model.get('x')-1);
+                break;
+            case 39: // Right
+                if (model.get('x') + model.get('width') < app.width && this.shapeFits(model.get('shape'), model.get('x')+1, model.get('y'))) model.set('x', model.get('x')+1);
+                break;
+            case 40: // Down
+                this.descend();
+                break;
+            case 38: // Up (Rotate)
+                var transposed = _.zip.apply(_, model.get('shape'));
+                var reversed = transposed.map(r => r.reverse());
+                if (model.get('x') + reversed[0].length <= app.width && this.shapeFits(reversed, model.get('x'), model.get('y'))) {
+                    model.set('shape', reversed);
+                    model.set('width', reversed[0].length);
+                    model.set('height', reversed.length);
+                }
+                break;
+            case 80: this.togglePause(); break;
+            case 78: this.newGame(); break;
+            case 77: this.toggleMute(); break;
+        }
+        this.drawAll();
+    },
+
+    togglePause: function() {
+        this.paused = !this.paused;
+        $('#message').html(this.paused ? "PAUSED" : "");
+        var music = document.getElementById('bgMusic');
+        this.paused ? music.pause() : music.play();
+    },
+
+    toggleMute: function() {
+        this.muted = !this.muted;
+        var music = document.getElementById('bgMusic');
+        music.muted = this.muted;
+        $('#mute').html(this.muted ? "Unmute (m)" : "Mute (m)");
+    },
+
+    gameOver: function() {
+        clearInterval(app.interval);
+        $('#message').html('GAME OVER');
+        document.getElementById('bgMusic').pause();
+    },
+
+    newGame: function() {
+        this.gridView.clearGrid();
+        this.collection.reset();
+        this.spawnNewBlock();
+        this.paused = false;
+        $('#message').html('');
+        this.start();
+    }
+});
+
+app.GridView = Backbone.View.extend({
+    clearGrid: function() {
+        app.grid = Array.from({length: app.height}, () => Array(app.width).fill(0));
+    },
+    updateGrid: function(model) {
+        var shape = model.get('shape'), x = model.get('x'), y = model.get('y');
+        for (var sy = 0; sy < shape.length; sy++) {
+            for (var sx = 0; sx < shape[sy].length; sx++) {
+                if (shape[sy][sx]) app.grid[y + sy][x + sx] = 1;
+            }
+        }
+    },
+    drawGrid: function() {
+        app.context.fillStyle = '#FFFFFF';
+        for (var y = 0; y < app.height; y++) {
+            for (var x = 0; x < app.width; x++) {
+                if (app.grid[y][x]) app.context.fillRect(x * app.blockSize, y * app.blockSize, app.blockSize, app.blockSize);
+            }
+        }
+    }
+});
+
+// --- INIT ---
+app.shapes = [
+    {shape: [[0,1,0],[1,1,1]]}, {shape: [[0,1,1],[1,1,0]]},
+    {shape: [[1,1,0],[0,1,1]]}, {shape: [[1],[1],[1],[1]]},
+    {shape: [[1,1],[1,1]]}, {shape: [[1,1],[1,0],[1,0]]}
+];
+
+$(function() {
+    new app.BoardView();
+    // Start music on first click (browser safety)
+    $('body').one('click', function() {
+        document.getElementById('bgMusic').play();
+    });
+});
+</script>
+</body>
+</html>
