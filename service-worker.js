@@ -1,63 +1,55 @@
-const CACHE_NAME = 'matteus-homepage-v1';
+const CACHE_NAME = 'matteus-homepage-v2';
+
+const BASE_PATH = '/Matteus-Homepage/';
+
 const urlsToCache = [
-  './',
-  './index.html',
-  './style.css',
-  './index.js',
-  './server.js',
-  './package.json',
-  './background.jpg',
-  './googles.ico',
-  './icon-192.png',
-  './icon-512.png',
-  './password.json',
-  './!/index.html',
-  './Games/filling.html',
-  './Games/memory.html',
-  './Games/tetris.html',
-  './Games/tetris.mp3',
-  './Games/TicTacDoom.html',
-  './Games/war.html'
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'style.css',
+  BASE_PATH + 'index.js',
+  BASE_PATH + 'background.jpg',
+  BASE_PATH + 'googles.ico',
+  BASE_PATH + 'icon-192.png',
+  BASE_PATH + 'icon-512.png',
+
+  // Games
+  BASE_PATH + 'Games/filling.html',
+  BASE_PATH + 'Games/memory.html',
+  BASE_PATH + 'Games/tetris.html',
+  BASE_PATH + 'Games/tetris.mp3',
+  BASE_PATH + 'Games/TicTacDoom.html',
+  BASE_PATH + 'Games/war.html'
 ];
 
-
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+      .then(cache => cache.addAll(urlsToCache))
   );
 });
 
+self.addEventListener('fetch', event => {
+  // Only handle requests inside this app
+  if (!event.request.url.startsWith(self.location.origin + BASE_PATH)) {
+    return;
+  }
 
-self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
+      .then(response => response || fetch(event.request))
   );
 });
 
-
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
           }
         })
-      );
-    })
+      )
+    )
   );
 });
