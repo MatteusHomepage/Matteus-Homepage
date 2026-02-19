@@ -1,16 +1,16 @@
 let CORRECT_PASSWORD = "Vinden4554111"; 
-let REMOTE_PASSWORD = null;
+let REMOTE_UPDATED = null;
 
 const fetchRemotePassword = async () => {
     try {
-        const response = await fetch('password.json?t=' + Date.now()); 
+        const response = await fetch('password.json', { cache: 'no-store' });
         const data = await response.json();
-        REMOTE_PASSWORD = data.password;
         CORRECT_PASSWORD = data.password;
-        return data.password;
+        REMOTE_UPDATED = data.updated;
+        return data;
     } catch (error) {
         console.error("Failed to fetch remote password:", error);
-        return CORRECT_PASSWORD; 
+        return null;
     }
 };
 
@@ -142,78 +142,39 @@ const setCookie = (name, value, days) => {
     document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
 };
 
-const setPassword = (value) => {
-    localStorage.setItem("sitePassword", value);
+const setPassword = (updatedDate) => {
+    localStorage.setItem("sitePasswordUpdated", updatedDate);
 };
 
 const getPassword = () => {
-    return localStorage.getItem("sitePassword") || "";
+    return localStorage.getItem("sitePasswordUpdated") || "";
 };
 
 const deletePassword = () => {
-    localStorage.removeItem("sitePassword");
+    localStorage.removeItem("sitePasswordUpdated");
 };
 
 const checkAuth = async () => {
     const passwordOverlay = document.getElementById("passwordOverlay");
-    const savedPassword = getPassword();
+    const savedUpdated = getPassword();
     const mainInput = document.getElementById("input");
-    
-  
-    await fetchRemotePassword();
-    
-    if (savedPassword === CORRECT_PASSWORD) {
+
+    const data = await fetchRemotePassword();
+
+    if (data && savedUpdated === data.updated) {
         passwordOverlay.style.display = "none";
         if (mainInput) mainInput.disabled = false;
-        
-
-        startPasswordMonitoring();
     } else {
-      
-        stopPasswordMonitoring();
-        
-        if (savedPassword) {
-            deletePassword(); 
+        if (savedUpdated) {
+            deletePassword();
         }
         passwordOverlay.style.display = "flex";
         if (mainInput) mainInput.disabled = true;
     }
 };
 
-
 let passwordCheckInterval = null;
 
-const startPasswordMonitoring = () => {
-
-    if (passwordCheckInterval) {
-        clearInterval(passwordCheckInterval);
-    }
-    
-
-    passwordCheckInterval = setInterval(async () => {
-        const savedPassword = getPassword();
-        
-
-        await fetchRemotePassword();
-
-        if (savedPassword && savedPassword !== CORRECT_PASSWORD) {
-            console.log("Password changed detected - locking site");
-            clearInterval(passwordCheckInterval);
-            deletePassword();
-            
-
-            const passwordOverlay = document.getElementById("passwordOverlay");
-            const mainInput = document.getElementById("input");
-            passwordOverlay.style.display = "flex";
-            if (mainInput) mainInput.disabled = true;
-            
-
-            closeAllMenus();
-
-            alert("The site password has been changed. Please re-enter the new password.");
-        }
-    }, 1000); 
-};
 
 const stopPasswordMonitoring = () => {
     if (passwordCheckInterval) {
@@ -232,15 +193,12 @@ document.addEventListener("DOMContentLoaded", () => {
 const handlePasswordSubmit = () => {
     const enteredPassword = passwordInput.value;
     const mainInput = document.getElementById("input");
-    
+
     if (enteredPassword === CORRECT_PASSWORD) {
-        setPassword(enteredPassword);
+        setPassword(REMOTE_UPDATED);
         passwordOverlay.style.display = "none";
         passwordError.textContent = "";
         if (mainInput) mainInput.disabled = false;
-        
- 
-        startPasswordMonitoring();
     } else {
         passwordError.textContent = "Incorrect password. Please try again.";
         passwordInput.value = "";
@@ -1990,8 +1948,6 @@ btnLock.addEventListener("click", () => {
 
 function lockNow() {
     if (confirm("Are you sure you want to lock the site? You'll need to enter the password again.")) {
-  
-        stopPasswordMonitoring();
         
         deletePassword();
         closeAllMenus();
