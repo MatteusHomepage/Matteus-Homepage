@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matteus-homepage-v3';
+const CACHE_NAME = 'matteus-homepage-v4';
 
 const BASE_PATH = '/Matteus-Homepage/';
 
